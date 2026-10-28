@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_Farid
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      BACKEND_DEV_USER: ${BACKEND_DEV_USER}
+      BACKEND_DEV_PASSWORD: ${BACKEND_DEV_PASSWORD}
+      DATA_ENGINEER_USER: ${DATA_ENGINEER_USER}
+      DATA_ENGINEER_PASSWORD: ${DATA_ENGINEER_PASSWORD}
+      BI_DEV_USER: ${BI_DEV_USER}
+      BI_DEV_PASSWORD: ${BI_DEV_PASSWORD}
+    ports:
+      - "22060:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [dbnet]
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_Farid
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "44060:80"
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [dbnet]
+
+volumes:
+  pgdata:
+
+networks:
+  dbnet:
